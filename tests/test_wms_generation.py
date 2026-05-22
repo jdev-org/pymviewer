@@ -2,14 +2,13 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import sys
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "xml"))
 
-from qgis.qgis import convert_qgis_layers_to_mviewer_xml
-from qgis.readWmsCapabilities import read_wms_capabilities
-from qgis.utils import normalize_xml_id, normalize_wms_legend_url, unique_xml_id
+
+from qgisxmviewer.services.qgis_to_mviewer import convert_qgis_layers_to_mviewer_xml
+from qgisxmviewer.wms_capabilities import read_wms_capabilities
+from qgisxmviewer.utils import normalize_xml_id, normalize_wms_legend_url, unique_xml_id
 
 
 class WmsGenerationTest(unittest.TestCase):
