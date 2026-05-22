@@ -6,7 +6,7 @@ projects and WMS GetCapabilities documents.
 ## Install
 
 ```bash
-python -m pip install -e python/lib/qgisxmviewer
+python -m pip install -e qgisxmviewer
 ```
 
 ## CLI
