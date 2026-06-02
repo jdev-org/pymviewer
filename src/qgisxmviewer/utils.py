@@ -119,7 +119,11 @@ def encode_wms_layer_name(layer_name: str | None) -> str | None:
     """Encode a WMS layer name the same way it appears in query parameters."""
     if not layer_name:
         return None
-    return quote(layer_name, safe="")
+    normalized = layer_name.replace("_", " ").strip()
+    normalized = re.sub(r"\b([cdjlmnst]) ([aeiouh])", r"\1'\2", normalized, flags=re.IGNORECASE)
+    if normalized and normalized == normalized.lower():
+        normalized = f"{normalized[:1].upper()}{normalized[1:]}"
+    return quote(normalized, safe="")
 
 
 def rebase_url(url: str | None, base_url: str) -> str | None:
