@@ -107,8 +107,6 @@ def normalize_wms_legend_url(legend_url: str | None) -> str | None:
     parts = urlsplit(legend_url)
     query = []
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
-        if key.upper() == "STYLE" and value == "défaut":
-            value = "default"
         query.append((key, value))
     return urlunsplit(
         (parts.scheme, parts.netloc, parts.path, urlencode(query, quote_via=quote), parts.fragment)
