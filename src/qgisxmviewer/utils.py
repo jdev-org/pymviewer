@@ -107,10 +107,19 @@ def normalize_wms_legend_url(legend_url: str | None) -> str | None:
     parts = urlsplit(legend_url)
     query = []
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
+        if key.lower() == "style" and value.lower() in {"défaut", "defaut"}:
+            value = "default"
         query.append((key, value))
     return urlunsplit(
         (parts.scheme, parts.netloc, parts.path, urlencode(query, quote_via=quote), parts.fragment)
     )
+
+
+def encode_wms_layer_name(layer_name: str | None) -> str | None:
+    """Encode a WMS layer name the same way it appears in query parameters."""
+    if not layer_name:
+        return None
+    return quote(layer_name, safe="")
 
 
 def rebase_url(url: str | None, base_url: str) -> str | None:
@@ -132,6 +141,8 @@ def parse_qgis_datasource(source: str | None) -> dict[str, str]:
     params: dict[str, str] = {}
     for key, value in re.findall(r"(\w+)='([^']*)'", source):
         params[key.lower()] = value
+    for key, value in parse_qsl(source, keep_blank_values=True):
+        params.setdefault(key.lower(), value)
     for token in source.split():
         if "=" in token and not token.startswith("|"):
             key, value = token.split("=", 1)

@@ -33,6 +33,7 @@ class QgisLayer:
     queryable: bool = True
     wms_published: bool = True
     wfs_published: bool = False
+    xyz: bool = False
     legend_url: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
 

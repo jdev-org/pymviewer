@@ -85,6 +85,7 @@ def _read_maplayer(node: ElementTree.Element, tree_info: dict[str, object]) -> Q
         queryable=_metadata_bool(metadata, "WMSIdentify", True),
         wms_published=_metadata_bool(metadata, "WMSPublish", True),
         wfs_published=_metadata_bool(metadata, "WFSPublish", layer_type == "wfs"),
+        xyz=_is_xyz_layer(provider, source),
         metadata=metadata,
     )
 
@@ -133,6 +134,14 @@ def _detect_layer_type(node: ElementTree.Element, provider: str | None, source: 
     if type_attr == "raster":
         return "raster"
     return "unknown"
+
+
+def _is_xyz_layer(provider: str | None, source: str | None) -> bool:
+    """Return whether a QGIS WMS provider layer is actually an XYZ tile source."""
+    if (provider or "").lower() != "wms":
+        return False
+    datasource = parse_qgis_datasource(source)
+    return datasource.get("type", "").lower() == "xyz"
 
 
 def _published_name(node: ElementTree.Element, fallback: str) -> str:
