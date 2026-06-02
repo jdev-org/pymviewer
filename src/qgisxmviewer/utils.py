@@ -116,14 +116,18 @@ def normalize_wms_legend_url(legend_url: str | None) -> str | None:
 
 
 def encode_wms_layer_name(layer_name: str | None) -> str | None:
-    """Encode a WMS layer name the same way it appears in query parameters."""
+    """Encode a WMS layer name exactly as published by the OGC service.
+
+    Args:
+        layer_name: Raw WMS layer name, typically read from a QGIS Server
+            GetCapabilities ``<Name>`` element.
+
+    Returns:
+        The URL-encoded layer name, or ``None`` when no name was provided.
+    """
     if not layer_name:
         return None
-    normalized = layer_name.replace("_", " ").strip()
-    normalized = re.sub(r"\b([cdjlmnst]) ([aeiouh])", r"\1'\2", normalized, flags=re.IGNORECASE)
-    if normalized and normalized == normalized.lower():
-        normalized = f"{normalized[:1].upper()}{normalized[1:]}"
-    return quote(normalized, safe="")
+    return quote(layer_name.strip(), safe="")
 
 
 def rebase_url(url: str | None, base_url: str) -> str | None:

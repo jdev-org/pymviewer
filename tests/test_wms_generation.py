@@ -53,6 +53,10 @@ class WmsGenerationTest(unittest.TestCase):
         """WMS layer names should be encoded like URL query parameter values."""
         self.assertEqual(encode_wms_layer_name("Cours d'eau"), "Cours%20d%27eau")
 
+    def test_encode_wms_layer_name_keeps_raw_service_name(self) -> None:
+        """WMS layer names should not be rewritten before encoding."""
+        self.assertEqual(encode_wms_layer_name("cours_d_eau"), "cours_d_eau")
+
     def test_capabilities_generation_keeps_wms_name_in_layers(self) -> None:
         """Generated XML should separate mviewer id from WMS layer name."""
         with TemporaryDirectory() as directory:
@@ -78,6 +82,26 @@ class WmsGenerationTest(unittest.TestCase):
             [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, service_url)
 
         self.assertEqual(xml_layer.get("name"), "Cours d'eau")
+        self.assertEqual(xml_layer.get("layers"), "Cours%20d%27eau")
+
+    def test_qgis_project_conversion_uses_published_name_for_layers(self) -> None:
+        """The WMS LAYER parameter should use the published name, not the XML id."""
+        layer = QgisLayer(
+            id="cours_d_eau",
+            name="Cours d'eau",
+            title="Cours d'eau",
+            provider="wms",
+            source=None,
+            layer_type="wms",
+            group="Hydrographie",
+            visible=False,
+            crs="EPSG:3857",
+            published_name="Cours d'eau",
+        )
+
+        [xml_layer] = convert_qgis_layers_to_mviewer_xml([layer], "http://localhost:90/ogc/pomme")
+
+        self.assertEqual(xml_layer.get("id"), "cours_d_eau")
         self.assertEqual(xml_layer.get("layers"), "Cours%20d%27eau")
 
     def test_service_override_rebases_legend_url(self) -> None:
