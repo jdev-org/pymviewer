@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,17 +8,27 @@ version = "0.1.0"
 description = "Generate mviewer XML configurations from QGIS Server projects and WMS capabilities."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "GPL-3.0-or-later"
 authors = [
-    { name = "mviewer contributors" }
+    { name = "PSC mviewer" },
+    { name = "Gaetan Bruel", email = "gaetan.bruel@jdev.fr" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
 ]
 dependencies = []
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9,<10",
+]
+
+[project.urls]
+Homepage = "https://github.com/jdev-org/pymviewer"
+Repository = "https://github.com/jdev-org/pymviewer"
+Issues = "https://github.com/jdev-org/pymviewer/issues"
 
 [project.scripts]
 pymviewer = "qgisxmviewer.cli:main"

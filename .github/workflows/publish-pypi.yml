@@ -1,0 +1,61 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build
+
+      - name: Prepare unique PyPI version
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          pyproject_path = Path("pyproject.toml")
+          content = pyproject_path.read_text(encoding="utf-8")
+
+          match = re.search(r'^version = "([^"]+)"$', content, flags=re.MULTILINE)
+          if match is None:
+              raise SystemExit("Unable to find [project].version in pyproject.toml")
+
+          base_version = match.group(1)
+          publish_version = f"{base_version}.post{os.environ['GITHUB_RUN_NUMBER']}"
+          updated = re.sub(
+              r'^version = "[^"]+"$',
+              f'version = "{publish_version}"',
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          pyproject_path.write_text(updated, encoding="utf-8")
+          print(f"Publishing version: {publish_version}")
+          PY
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

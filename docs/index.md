@@ -6,7 +6,13 @@ projects and WMS GetCapabilities documents.
 ## Install
 
 ```bash
-python -m pip install -e qgisxmviewer
+python -m pip install pymviewer
+```
+
+For local development:
+
+```bash
+python -m pip install -e .
 ```
 
 ## CLI
@@ -47,11 +53,11 @@ create_mviewer_config_from_wms_capabilities(
 The repository publishes the package to PyPI from GitHub Actions when a GitHub
 release is published.
 
-PyPI project page: https://pypi.org/project/pymviewer/
+PyPI project page: <https://pypi.org/project/pymviewer/>
 
 ### Prerequisites
 
-- The workflow file is [publish-pypi.yml](/home/gaetan/projects/mviewer/pymviewer/.github/workflows/publish-pypi.yml).
+- The workflow file is `.github/workflows/publish-pypi.yml`.
 - PyPI Trusted Publishing must be configured for this GitHub repository.
 - The version in `pyproject.toml` is used as the base version.
 - The workflow publishes a derived version in the form
@@ -88,19 +94,7 @@ At release publication time, GitHub Actions:
 5. publishes the generated artifacts to PyPI with
    `pypa/gh-action-pypi-publish`.
 
-### Manual notes
-
-- The published PyPI version will not exactly match the GitHub tag if the
-  `.post...` suffix is added by the workflow.
-- If exact tag-to-version parity is required, the workflow must be adjusted to
-  publish the exact tag version instead of generating a post-release suffix.
-
-## Docs
-
-The project ships a `mkdocs-material` configuration in [mkdocs.yml](/home/gaetan/projects/mviewer/pymviewer/mkdocs.yml) with the source pages in [docs/index.md](/home/gaetan/projects/mviewer/pymviewer/docs/index.md).
-
-The published documentation is intended to be available on GitHub Pages:
-<https://jdev-org.github.io/pymviewer/>
+## Build docs
 
 Install the documentation dependencies:
 
@@ -114,25 +108,8 @@ Run the local documentation server:
 mkdocs serve
 ```
 
-Build the static documentation site:
+Build the static site:
 
 ```bash
 mkdocs build
 ```
-
-GitHub Pages deployment is handled by
-[deploy-docs.yml](/home/gaetan/projects/mviewer/pymviewer/.github/workflows/deploy-docs.yml)
-on each push to `main`.
-
-To enable it in GitHub:
-
-1. Open the repository settings.
-2. Go to `Pages`.
-3. Set the source to `GitHub Actions`.
-
-## Notes
-
-- mviewer layer `id` values are normalized and unique.
-- WMS layer names are preserved in the `layers` attribute.
-- WMS legend URLs are encoded and can be rebased to an override service URL.
-- `.qgs` projects are supported. `.qgz` archives are not supported yet.

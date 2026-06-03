@@ -1,0 +1,21 @@
+site_name: pymviewer
+site_description: Generate mviewer XML configurations from QGIS Server projects and WMS capabilities.
+site_url: https://jdev-org.github.io/pymviewer/
+repo_url: https://github.com/jdev-org/pymviewer
+repo_name: jdev-org/pymviewer
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
