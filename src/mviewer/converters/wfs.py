@@ -2,8 +2,8 @@
 
 from xml.etree.ElementTree import Element
 
+from mviewer.utils import add_query_params, bool_to_xml
 from qgisxmviewer.models import QgisLayer
-from qgisxmviewer.utils import add_query_params, bool_to_xml
 
 
 def qgis_wfs_layer_to_mviewer_xml(layer: QgisLayer, service_base_url: str) -> Element:

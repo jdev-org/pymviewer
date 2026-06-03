@@ -4,16 +4,16 @@ from pathlib import Path
 from xml.etree.ElementTree import Element, ElementTree
 import logging
 
-from qgisxmviewer.exceptions import MviewerXmlError
-from qgisxmviewer.models import QgisLayer
-from qgisxmviewer.writer.mviewer_xml import (
+from mviewer.converters.geojson import qgis_geojson_layer_to_mviewer_xml
+from mviewer.converters.wfs import qgis_wfs_layer_to_mviewer_xml
+from mviewer.converters.wms import qgis_wms_layer_to_mviewer_xml
+from mviewer.exceptions import MviewerXmlError
+from mviewer.writer.mviewer_xml import (
     build_mviewer_xml,
     serialize_mviewer_xml,
     write_mviewer_xml,
 )
-from qgisxmviewer.converters.geojson import qgis_geojson_layer_to_mviewer_xml
-from qgisxmviewer.converters.wfs import qgis_wfs_layer_to_mviewer_xml
-from qgisxmviewer.converters.wms import qgis_wms_layer_to_mviewer_xml
+from qgisxmviewer.models import QgisLayer
 from qgisxmviewer.qgis_project import read_qgis_server_project
 from qgisxmviewer.wms_capabilities import read_wms_capabilities
 

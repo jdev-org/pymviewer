@@ -5,25 +5,15 @@ from pathlib import Path
 from xml.etree.ElementTree import Element, ElementTree, indent
 import logging
 
-from qgisxmviewer.exceptions import MviewerXmlError
-from qgisxmviewer.writer.complete_xml import complete_mviewer_xml
-from qgisxmviewer.writer.create_xml import create_mviewer_xml_skeleton
+from mviewer.exceptions import MviewerXmlError
+from mviewer.writer.complete_xml import complete_mviewer_xml
+from mviewer.writer.create_xml import create_mviewer_xml_skeleton
 
 LOGGER = logging.getLogger(__name__)
 
 
 def build_mviewer_xml(layer_elements: list[Element]) -> ElementTree:
-    """Build a mviewer XML document from layer XML elements.
-
-    Args:
-        layer_elements: Layer elements already converted to mviewer format.
-
-    Returns:
-        XML tree ready to write to disk.
-
-    Raises:
-        MviewerXmlError: If no layer element is provided.
-    """
+    """Build a mviewer XML document from layer XML elements."""
     if not layer_elements:
         raise MviewerXmlError("Cannot build a mviewer configuration without layers")
 
@@ -32,15 +22,7 @@ def build_mviewer_xml(layer_elements: list[Element]) -> ElementTree:
 
 
 def write_mviewer_xml(tree: ElementTree, output_path: Path) -> Path:
-    """Write a mviewer XML document to disk.
-
-    Args:
-        tree: XML tree to write.
-        output_path: Destination file path.
-
-    Returns:
-        The destination path.
-    """
+    """Write a mviewer XML document to disk."""
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     indent(tree, space="    ")
@@ -50,14 +32,7 @@ def write_mviewer_xml(tree: ElementTree, output_path: Path) -> Path:
 
 
 def serialize_mviewer_xml(tree: ElementTree) -> str:
-    """Serialize a mviewer XML document to a UTF-8 string.
-
-    Args:
-        tree: XML tree to serialize.
-
-    Returns:
-        Serialized XML string including the XML declaration.
-    """
+    """Serialize a mviewer XML document to a UTF-8 string."""
     buffer = BytesIO()
     indent(tree, space="    ")
     tree.write(buffer, encoding="UTF-8", xml_declaration=True)

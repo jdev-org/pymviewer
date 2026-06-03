@@ -4,13 +4,10 @@ from pathlib import Path
 from xml.etree import ElementTree
 import logging
 
+from mviewer.utils import normalize_xml_id
 from qgisxmviewer.exceptions import QgisProjectError
 from qgisxmviewer.models import QgisExtent, QgisLayer
-from qgisxmviewer.utils import (
-    normalize_xml_id,
-    parse_qgis_datasource,
-    validate_project_path,
-)
+from qgisxmviewer.utils import parse_qgis_datasource, validate_project_path
 
 LOGGER = logging.getLogger(__name__)
 

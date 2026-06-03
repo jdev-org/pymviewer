@@ -1,4 +1,4 @@
-"""Internal data models used by the QGIS to mviewer conversion workflow."""
+"""Internal data models used by the QGIS parsing workflow."""
 
 from dataclasses import dataclass, field
 
@@ -36,17 +36,3 @@ class QgisLayer:
     xyz: bool = False
     legend_url: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class MviewerLayer:
-    """Represent a layer ready to be serialized as mviewer XML."""
-
-    id: str
-    name: str
-    layer_type: str
-    url: str | None
-    layers: str | None
-    visible: bool
-    queryable: bool
-    group: str | None

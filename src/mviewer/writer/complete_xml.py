@@ -4,8 +4,8 @@ from copy import deepcopy
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 import logging
 
-from qgisxmviewer.exceptions import MviewerXmlError
-from qgisxmviewer.utils import normalize_xml_id
+from mviewer.exceptions import MviewerXmlError
+from mviewer.utils import normalize_xml_id
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,23 +15,7 @@ def complete_mviewer_xml(
     layer_elements: list[Element],
     default_theme_name: str = "Projet QGIS",
 ) -> ElementTree:
-    """Add layer elements to an existing mviewer XML configuration tree.
-
-    Layer elements may carry a temporary ``group`` attribute. This function
-    uses that value to create or reuse a mviewer ``theme`` node, then removes
-    the temporary attribute from the copied output layer.
-
-    Args:
-        tree: Existing mviewer XML tree to complete.
-        layer_elements: mviewer ``layer`` elements to append.
-        default_theme_name: Theme name used when a layer has no group.
-
-    Returns:
-        The completed XML tree.
-
-    Raises:
-        MviewerXmlError: If the tree is invalid or no layer is provided.
-    """
+    """Add layer elements to an existing mviewer XML configuration tree."""
     if not layer_elements:
         raise MviewerXmlError("Cannot complete a mviewer configuration without layers")
 

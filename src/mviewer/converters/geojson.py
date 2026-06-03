@@ -2,8 +2,9 @@
 
 from xml.etree.ElementTree import Element
 
+from mviewer.utils import bool_to_xml
 from qgisxmviewer.models import QgisLayer
-from qgisxmviewer.utils import bool_to_xml, parse_qgis_datasource
+from qgisxmviewer.utils import parse_qgis_datasource
 
 
 def qgis_geojson_layer_to_mviewer_xml(layer: QgisLayer) -> Element:

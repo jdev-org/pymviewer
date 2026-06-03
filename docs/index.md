@@ -51,7 +51,7 @@ create_mviewer_config_from_wms_capabilities(
 ## How to use it with an MCP?
 
 `pymviewer` now ships a dedicated tool-friendly API in
-`qgisxmviewer.tools_api`. It is designed for MCP usage: string inputs,
+`tools.python`. It is designed for MCP usage: string inputs,
 serializable outputs, optional inline XML, and plain dictionaries for layer
 inspection.
 
@@ -65,7 +65,7 @@ Available entry points:
 Example:
 
 ```python
-from qgisxmviewer.tools_api import (
+from tools.python import (
     generate_mviewer_from_capabilities_tool,
     generate_mviewer_from_qgs_tool,
     inspect_qgs_layers_tool,

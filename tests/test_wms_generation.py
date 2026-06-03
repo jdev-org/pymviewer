@@ -4,16 +4,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+from mviewer.utils import (
+    encode_wms_layer_name,
+    normalize_wms_legend_url,
+    normalize_xml_id,
+    unique_xml_id,
+)
 from qgisxmviewer.models import QgisLayer
 from qgisxmviewer.qgis_project import read_qgis_server_project
 from qgisxmviewer.services.qgis_to_mviewer import convert_qgis_layers_to_mviewer_xml
 from qgisxmviewer.wms_capabilities import read_wms_capabilities
-from qgisxmviewer.utils import (
-    encode_wms_layer_name,
-    normalize_xml_id,
-    normalize_wms_legend_url,
-    unique_xml_id,
-)
 
 
 class WmsGenerationTest(unittest.TestCase):
@@ -78,7 +78,9 @@ class WmsGenerationTest(unittest.TestCase):
         """Generated XML should encode apostrophes in WMS layer names."""
         with TemporaryDirectory() as directory:
             capabilities_path = Path(directory) / "capabilities.xml"
-            capabilities_path.write_text(_capabilities_xml_with_apostrophe(), encoding="utf-8")
+            capabilities_path.write_text(
+                _capabilities_xml_with_apostrophe(), encoding="utf-8"
+            )
             layers, service_url = read_wms_capabilities(capabilities_path)
             [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, service_url)
 
@@ -100,19 +102,27 @@ class WmsGenerationTest(unittest.TestCase):
             published_name="Cours d'eau",
         )
 
-        [xml_layer] = convert_qgis_layers_to_mviewer_xml([layer], "http://localhost:90/ogc/pomme")
+        [xml_layer] = convert_qgis_layers_to_mviewer_xml(
+            [layer], "http://localhost:90/ogc/pomme"
+        )
 
         self.assertEqual(xml_layer.get("id"), "Cours d'eau")
         self.assertEqual(xml_layer.get("layers"), "Cours%20d%27eau")
 
-    def test_qgis_project_wms_uses_datasource_layers_for_service_layer_name(self) -> None:
+    def test_qgis_project_wms_uses_datasource_layers_for_service_layer_name(
+        self,
+    ) -> None:
         """WMS project export should use the datasource ``layers`` parameter."""
         with TemporaryDirectory() as directory:
             project_path = Path(directory) / "project.qgs"
-            project_path.write_text(_qgis_project_xml_with_wms_datasource_layer(), encoding="utf-8")
+            project_path.write_text(
+                _qgis_project_xml_with_wms_datasource_layer(), encoding="utf-8"
+            )
 
             layers = read_qgis_server_project(project_path)
-            [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, "http://localhost:90/ogc/pomme")
+            [xml_layer] = convert_qgis_layers_to_mviewer_xml(
+                layers, "http://localhost:90/ogc/pomme"
+            )
 
         self.assertEqual(layers[0].published_name, "environnement_hydrologie")
         self.assertEqual(xml_layer.get("id"), "environnement_hydrologie")
@@ -123,10 +133,14 @@ class WmsGenerationTest(unittest.TestCase):
         """WMS project export should fall back to ``layer-tree-layer@source``."""
         with TemporaryDirectory() as directory:
             project_path = Path(directory) / "project.qgs"
-            project_path.write_text(_qgis_project_xml_with_layer_tree_source_only(), encoding="utf-8")
+            project_path.write_text(
+                _qgis_project_xml_with_layer_tree_source_only(), encoding="utf-8"
+            )
 
             layers = read_qgis_server_project(project_path)
-            [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, "http://localhost:90/ogc/pomme")
+            [xml_layer] = convert_qgis_layers_to_mviewer_xml(
+                layers, "http://localhost:90/ogc/pomme"
+            )
 
         self.assertEqual(layers[0].published_name, "environnement_hydrologie")
         self.assertEqual(xml_layer.get("id"), "environnement_hydrologie")
@@ -169,7 +183,9 @@ class WmsGenerationTest(unittest.TestCase):
             xyz=True,
         )
 
-        [xml_layer] = convert_qgis_layers_to_mviewer_xml([layer], "http://localhost:90/ogc/data")
+        [xml_layer] = convert_qgis_layers_to_mviewer_xml(
+            [layer], "http://localhost:90/ogc/data"
+        )
 
         self.assertEqual(xml_layer.get("type"), "wms")
         self.assertEqual(xml_layer.get("xyz"), "true")

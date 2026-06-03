@@ -4,9 +4,9 @@ from pathlib import Path
 from xml.etree import ElementTree
 import logging
 
+from mviewer.utils import normalize_wms_legend_url
 from qgisxmviewer.exceptions import QgisProjectError
 from qgisxmviewer.models import QgisExtent, QgisLayer
-from qgisxmviewer.utils import normalize_wms_legend_url
 
 LOGGER = logging.getLogger(__name__)
 

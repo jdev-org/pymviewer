@@ -13,8 +13,8 @@ DEFAULT_APPLICATION_ATTRIBUTES = {
 
 DEFAULT_MAPOPTIONS_ATTRIBUTES = {
     "projection": "EPSG:3857",
-    "center": "0,0",
-    "zoom": "2",
+    "center": "-220750.13768758904,6144925.57790189",
+    "zoom": "8",
 }
 
 DEFAULT_BASELAYER_ATTRIBUTES = {
@@ -33,16 +33,7 @@ def create_mviewer_xml_skeleton(
     mapoptions_attributes: dict[str, str] | None = None,
     include_default_baselayer: bool = True,
 ) -> ElementTree:
-    """Create an empty mviewer XML configuration tree.
-
-    Args:
-        application_attributes: Attributes merged into the ``application`` node.
-        mapoptions_attributes: Attributes merged into the ``mapoptions`` node.
-        include_default_baselayer: Whether to add an OpenStreetMap base layer.
-
-    Returns:
-        An XML tree containing the common mviewer configuration sections.
-    """
+    """Create an empty mviewer XML configuration tree."""
     root = Element("config")
     SubElement(
         root,

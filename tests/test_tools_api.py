@@ -4,7 +4,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from qgisxmviewer.tools_api import (
+from tools.python import (
+    create_wfs_layer_structure_tool,
+    create_wms_layer_structure_tool,
     generate_mviewer_from_capabilities_tool,
     generate_mviewer_from_qgs_tool,
     inspect_qgs_layers_tool,
@@ -14,6 +16,93 @@ from qgisxmviewer.tools_api import (
 
 class ToolsApiTest(unittest.TestCase):
     """Validate serializable wrappers intended for MCP tools."""
+
+    def test_create_wms_layer_structure_returns_mviewer_attributes(self) -> None:
+        """WMS tool should return a serializable layer element structure."""
+        result = create_wms_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
+            layer_id="cadastre",
+            name="Cadastre",
+            published_name="cadastre_layer",
+            group="Reference",
+            visible=True,
+            queryable=False,
+            legend_url=(
+                "http://localhost/ogc/data?SERVICE=WMS&REQUEST=GetLegendGraphic"
+                "&LAYER=cadastre_layer"
+            ),
+        )
+
+        self.assertEqual(result["tag"], "layer")
+        self.assertEqual(result["attributes"]["type"], "wms")
+        self.assertEqual(result["attributes"]["id"], "cadastre")
+        self.assertEqual(result["attributes"]["layers"], "cadastre_layer")
+        self.assertEqual(result["attributes"]["visible"], "true")
+        self.assertEqual(result["attributes"]["queryable"], "false")
+
+    def test_create_wms_layer_structure_accepts_layer_info_json(self) -> None:
+        """WMS tool should accept a plain JSON-compatible layer structure."""
+        result = create_wms_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
+            layer_info={
+                "id": "cadastre",
+                "name": "Cadastre",
+                "published_name": "cadastre_layer",
+                "group": "Reference",
+                "visible": True,
+            },
+        )
+
+        self.assertEqual(result["attributes"]["id"], "cadastre")
+        self.assertEqual(result["attributes"]["layers"], "cadastre_layer")
+        self.assertEqual(result["attributes"]["visible"], "true")
+
+    def test_create_wms_layer_structure_accepts_serialized_qgis_layer(self) -> None:
+        """WMS tool should accept a serialized QGIS layer mapping."""
+        result = create_wms_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
+            qgis_layer={
+                "id": "cadastre",
+                "name": "Cadastre",
+                "title": "Cadastre",
+                "provider": "wms",
+                "source": None,
+                "layer_type": "wms",
+                "group": "Reference",
+                "visible": False,
+                "crs": "EPSG:3857",
+                "abstract": None,
+                "extent": None,
+                "published_name": "cadastre_layer",
+                "short_name": None,
+                "queryable": True,
+                "wms_published": True,
+                "wfs_published": False,
+                "xyz": False,
+                "legend_url": None,
+                "metadata": {},
+            },
+        )
+
+        self.assertEqual(result["attributes"]["id"], "cadastre")
+        self.assertEqual(result["attributes"]["layers"], "cadastre_layer")
+        self.assertEqual(result["attributes"]["queryable"], "true")
+
+    def test_create_wfs_layer_structure_returns_mviewer_attributes(self) -> None:
+        """WFS tool should return a serializable layer element structure."""
+        result = create_wfs_layer_structure_tool(
+            layer_id="parcels",
+            name="Parcels",
+            published_name="demo:parcels",
+            service_url="http://localhost:90/ogc/data",
+            group="Reference",
+        )
+
+        self.assertEqual(result["tag"], "layer")
+        self.assertEqual(result["attributes"]["type"], "geojson")
+        self.assertEqual(result["attributes"]["id"], "parcels")
+        self.assertIn("SERVICE=WFS", result["attributes"]["url"])
+        self.assertIn("TYPENAME=demo%3Aparcels", result["attributes"]["url"])
 
     def test_generate_from_capabilities_inline_returns_xml(self) -> None:
         """Inline generation should return XML content instead of a file path."""

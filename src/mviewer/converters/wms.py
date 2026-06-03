@@ -2,14 +2,14 @@
 
 from xml.etree.ElementTree import Element
 
-from qgisxmviewer.models import QgisLayer
-from qgisxmviewer.utils import (
+from mviewer.utils import (
     bool_to_xml,
     clean_service_url,
     encode_wms_layer_name,
-    parse_qgis_datasource,
     rebase_url,
 )
+from qgisxmviewer.models import QgisLayer
+from qgisxmviewer.utils import parse_qgis_datasource
 
 
 def qgis_wms_layer_to_mviewer_xml(layer: QgisLayer, service_base_url: str) -> Element:

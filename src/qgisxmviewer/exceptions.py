@@ -1,9 +1,5 @@
-"""Domain exceptions for QGIS project parsing and mviewer XML generation."""
+"""Domain exceptions for QGIS project parsing."""
 
 
 class QgisProjectError(Exception):
     """Raised when a QGIS project cannot be read or interpreted."""
-
-
-class MviewerXmlError(Exception):
-    """Raised when a mviewer XML document cannot be generated."""
