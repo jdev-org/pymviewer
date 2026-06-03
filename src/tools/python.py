@@ -54,43 +54,40 @@ def create_wms_layer_structure_tool(
         layer_info=layer_info,
         qgis_layer=qgis_layer,
     )
-    element = qgis_wms_layer_to_mviewer_xml(
-        layer,
-        _require_string(service_url, "service_url"),
-    )
-    return _serialize_xml_element(element)
+    return _serialize_wms_layer_structure(layer, service_url)
 
 
 def create_wfs_layer_structure_tool(
-    layer_id: str,
-    name: str,
     service_url: str,
+    layer_id: str | None = None,
+    name: str | None = None,
+    layer_info: dict[str, Any] | None = None,
+    qgis_layer: dict[str, Any] | None = None,
     published_name: str | None = None,
     group: str | None = None,
     visible: bool = False,
     queryable: bool = True,
+    source: str | None = None,
 ) -> dict[str, Any]:
-    """Create a serializable mviewer WFS layer structure."""
-    layer = QgisLayer(
-        id=_require_string(layer_id, "layer_id"),
-        name=_require_string(name, "name"),
-        title=_require_string(name, "name"),
-        provider="wfs",
-        source=None,
-        layer_type="wfs",
-        group=_optional_string(group, "group"),
+    """Create a serializable mviewer WFS layer structure.
+
+    The layer definition can come from:
+    - ``qgis_layer``: a serialized ``QgisLayer`` mapping;
+    - ``layer_info``: a plain JSON-compatible mapping;
+    - explicit keyword arguments.
+    """
+    layer = _build_wfs_layer(
+        layer_id=layer_id,
+        name=name,
+        published_name=published_name,
+        group=group,
         visible=visible,
-        crs=None,
-        published_name=_optional_string(published_name, "published_name")
-        or _require_string(name, "name"),
         queryable=queryable,
-        wfs_published=True,
+        source=source,
+        layer_info=layer_info,
+        qgis_layer=qgis_layer,
     )
-    element = qgis_wfs_layer_to_mviewer_xml(
-        layer,
-        _require_string(service_url, "service_url"),
-    )
-    return _serialize_xml_element(element)
+    return _serialize_wfs_layer_structure(layer, service_url)
 
 
 def generate_mviewer_from_qgs_tool(
@@ -203,6 +200,24 @@ def _serialize_xml_element(element: Element) -> dict[str, Any]:
     }
 
 
+def _serialize_wms_layer_structure(layer: QgisLayer, service_url: str) -> dict[str, Any]:
+    """Serialize a WMS ``QgisLayer`` into a tool-friendly structure."""
+    element = qgis_wms_layer_to_mviewer_xml(
+        layer,
+        _require_string(service_url, "service_url"),
+    )
+    return _serialize_xml_element(element)
+
+
+def _serialize_wfs_layer_structure(layer: QgisLayer, service_url: str) -> dict[str, Any]:
+    """Serialize a WFS ``QgisLayer`` into a tool-friendly structure."""
+    element = qgis_wfs_layer_to_mviewer_xml(
+        layer,
+        _require_string(service_url, "service_url"),
+    )
+    return _serialize_xml_element(element)
+
+
 def _build_wms_layer(
     layer_id: str | None,
     name: str | None,
@@ -219,9 +234,9 @@ def _build_wms_layer(
 ) -> QgisLayer:
     """Build a WMS-capable ``QgisLayer`` from tool inputs."""
     if qgis_layer is not None:
-        return _qgis_layer_from_mapping(qgis_layer)
+        return _qgis_layer_from_mapping(qgis_layer, default_layer_type="wms")
 
-    info = layer_info or {}
+    info = _resolve_layer_info(layer_info)
     resolved_name = _coalesce_string(name, info.get("name"), info.get("title"))
     resolved_layer_id = _coalesce_string(layer_id, info.get("id"), resolved_name)
     resolved_published_name = _coalesce_string(
@@ -265,7 +280,59 @@ def _build_wms_layer(
     )
 
 
-def _qgis_layer_from_mapping(layer_data: dict[str, Any]) -> QgisLayer:
+def _build_wfs_layer(
+    layer_id: str | None,
+    name: str | None,
+    published_name: str | None,
+    group: str | None,
+    visible: bool,
+    queryable: bool,
+    source: str | None,
+    layer_info: dict[str, Any] | None,
+    qgis_layer: dict[str, Any] | None,
+) -> QgisLayer:
+    """Build a WFS-capable ``QgisLayer`` from tool inputs."""
+    if qgis_layer is not None:
+        return _qgis_layer_from_mapping(qgis_layer, default_layer_type="wfs")
+
+    info = _resolve_layer_info(layer_info)
+    resolved_name = _coalesce_string(name, info.get("name"), info.get("title"))
+    resolved_layer_id = _coalesce_string(layer_id, info.get("id"), resolved_name)
+    resolved_published_name = _coalesce_string(
+        published_name,
+        info.get("published_name"),
+        info.get("short_name"),
+        info.get("name"),
+        info.get("title"),
+        resolved_name,
+    )
+
+    return QgisLayer(
+        id=_require_string(resolved_layer_id, "layer_id"),
+        name=_require_string(resolved_name, "name"),
+        title=_require_string(resolved_name, "name"),
+        provider="wfs",
+        source=_coalesce_optional_string(source, info.get("source")),
+        layer_type="wfs",
+        group=_coalesce_optional_string(group, info.get("group")),
+        visible=_coalesce_bool(info.get("visible"), visible),
+        crs=_coalesce_optional_string(info.get("crs")),
+        abstract=_coalesce_optional_string(info.get("abstract")),
+        published_name=_require_string(resolved_published_name, "published_name"),
+        short_name=_coalesce_optional_string(info.get("short_name")),
+        queryable=_coalesce_bool(info.get("queryable"), queryable),
+        wms_published=_coalesce_bool(info.get("wms_published"), False),
+        wfs_published=_coalesce_bool(info.get("wfs_published"), True),
+        xyz=_coalesce_bool(info.get("xyz"), False),
+        legend_url=_coalesce_optional_string(info.get("legend_url")),
+        metadata=_coalesce_mapping(info.get("metadata")),
+    )
+
+
+def _qgis_layer_from_mapping(
+    layer_data: dict[str, Any],
+    default_layer_type: str,
+) -> QgisLayer:
     """Build a ``QgisLayer`` instance from a serialized mapping."""
     resolved_name = _coalesce_string(layer_data.get("name"), layer_data.get("title"))
     return QgisLayer(
@@ -274,7 +341,7 @@ def _qgis_layer_from_mapping(layer_data: dict[str, Any]) -> QgisLayer:
         title=_coalesce_optional_string(layer_data.get("title"), resolved_name),
         provider=_coalesce_optional_string(layer_data.get("provider")),
         source=_coalesce_optional_string(layer_data.get("source")),
-        layer_type=_coalesce_string(layer_data.get("layer_type"), "wms"),
+        layer_type=_coalesce_string(layer_data.get("layer_type"), default_layer_type),
         group=_coalesce_optional_string(layer_data.get("group")),
         visible=_coalesce_bool(layer_data.get("visible"), False),
         crs=_coalesce_optional_string(layer_data.get("crs")),
@@ -292,6 +359,11 @@ def _qgis_layer_from_mapping(layer_data: dict[str, Any]) -> QgisLayer:
         legend_url=_coalesce_optional_string(layer_data.get("legend_url")),
         metadata=_coalesce_mapping(layer_data.get("metadata")),
     )
+
+
+def _resolve_layer_info(layer_info: dict[str, Any] | None) -> dict[str, Any]:
+    """Return a normalized layer definition mapping."""
+    return layer_info or {}
 
 
 def _coalesce_string(*values: Any) -> str | None:
@@ -338,6 +410,7 @@ def _coalesce_mapping(value: Any) -> dict[str, str]:
     """Return a string-keyed mapping or an empty mapping."""
     if not isinstance(value, dict):
         return {}
+    return {str(key): str(item) for key, item in value.items()}
     return {str(key): str(item) for key, item in value.items()}
 
 

@@ -91,15 +91,64 @@ class ToolsApiTest(unittest.TestCase):
     def test_create_wfs_layer_structure_returns_mviewer_attributes(self) -> None:
         """WFS tool should return a serializable layer element structure."""
         result = create_wfs_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
             layer_id="parcels",
             name="Parcels",
             published_name="demo:parcels",
-            service_url="http://localhost:90/ogc/data",
             group="Reference",
         )
 
         self.assertEqual(result["tag"], "layer")
         self.assertEqual(result["attributes"]["type"], "geojson")
+        self.assertEqual(result["attributes"]["id"], "parcels")
+        self.assertIn("SERVICE=WFS", result["attributes"]["url"])
+        self.assertIn("TYPENAME=demo%3Aparcels", result["attributes"]["url"])
+
+    def test_create_wfs_layer_structure_accepts_layer_info_json(self) -> None:
+        """WFS tool should accept a plain JSON-compatible layer structure."""
+        result = create_wfs_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
+            layer_info={
+                "id": "parcels",
+                "name": "Parcels",
+                "published_name": "demo:parcels",
+                "group": "Reference",
+                "visible": True,
+            },
+        )
+
+        self.assertEqual(result["attributes"]["id"], "parcels")
+        self.assertIn("SERVICE=WFS", result["attributes"]["url"])
+        self.assertIn("TYPENAME=demo%3Aparcels", result["attributes"]["url"])
+        self.assertEqual(result["attributes"]["visible"], "true")
+
+    def test_create_wfs_layer_structure_accepts_serialized_qgis_layer(self) -> None:
+        """WFS tool should accept a serialized QGIS layer mapping."""
+        result = create_wfs_layer_structure_tool(
+            service_url="http://localhost:90/ogc/data",
+            qgis_layer={
+                "id": "parcels",
+                "name": "Parcels",
+                "title": "Parcels",
+                "provider": "wfs",
+                "source": None,
+                "layer_type": "wfs",
+                "group": "Reference",
+                "visible": False,
+                "crs": "EPSG:4326",
+                "abstract": None,
+                "extent": None,
+                "published_name": "demo:parcels",
+                "short_name": None,
+                "queryable": True,
+                "wms_published": False,
+                "wfs_published": True,
+                "xyz": False,
+                "legend_url": None,
+                "metadata": {},
+            },
+        )
+
         self.assertEqual(result["attributes"]["id"], "parcels")
         self.assertIn("SERVICE=WFS", result["attributes"]["url"])
         self.assertIn("TYPENAME=demo%3Aparcels", result["attributes"]["url"])
