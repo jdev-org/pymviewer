@@ -12,6 +12,8 @@ LOGGER = logging.getLogger(__name__)
 
 WMS_NS = {"wms": "http://www.opengis.net/wms"}
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
+
+
 def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str]:
     """Read a WMS GetCapabilities document and return layers plus service URL.
 
@@ -39,13 +41,17 @@ def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str
 
     namespace = _namespace(root)
     service_url = _service_url(root, namespace)
-    service_title = _text(root, "Service/Title", namespace) or _text(root, "Capability/Layer/Title", namespace)
+    service_title = _text(root, "Service/Title", namespace) or _text(
+        root, "Capability/Layer/Title", namespace
+    )
     root_layer = _find(root, "Capability/Layer", namespace)
     if root_layer is None:
         raise QgisProjectError(f"WMS capabilities contains no root layer: {path}")
 
     layers = []
-    for node in root_layer.findall(".//wms:Layer" if namespace else ".//Layer", WMS_NS if namespace else {}):
+    for node in root_layer.findall(
+        ".//wms:Layer" if namespace else ".//Layer", WMS_NS if namespace else {}
+    ):
         layer = _read_named_layer(node, service_title, namespace)
         if layer is not None:
             layers.append(layer)
@@ -112,7 +118,9 @@ def _legend_url(node: ElementTree.Element, namespace: str | None) -> str | None:
 
 def _extent(node: ElementTree.Element, namespace: str | None) -> QgisExtent | None:
     """Read the EPSG:3857 bounding box when available."""
-    boxes = node.findall("wms:BoundingBox" if namespace else "BoundingBox", WMS_NS if namespace else {})
+    boxes = node.findall(
+        "wms:BoundingBox" if namespace else "BoundingBox", WMS_NS if namespace else {}
+    )
     selected = None
     for box in boxes:
         if box.get("CRS") == "EPSG:3857" or box.get("SRS") == "EPSG:3857":
@@ -137,14 +145,18 @@ def _namespace(root: ElementTree.Element) -> str | None:
     return None
 
 
-def _find(root: ElementTree.Element, path: str, namespace: str | None) -> ElementTree.Element | None:
+def _find(
+    root: ElementTree.Element, path: str, namespace: str | None
+) -> ElementTree.Element | None:
     """Find a child node with optional WMS namespace handling."""
     if namespace:
         return root.find("/".join(f"wms:{part}" for part in path.split("/")), WMS_NS)
     return root.find(path)
 
 
-def _find_from(node: ElementTree.Element, path: str, namespace: str | None) -> ElementTree.Element | None:
+def _find_from(
+    node: ElementTree.Element, path: str, namespace: str | None
+) -> ElementTree.Element | None:
     """Find a descendant node with optional WMS namespace handling."""
     if namespace:
         return node.find("/".join(f"wms:{part}" for part in path.split("/")), WMS_NS)
@@ -159,7 +171,9 @@ def _text(root: ElementTree.Element, path: str, namespace: str | None) -> str | 
     return node.text.strip() or None
 
 
-def _text_from(node: ElementTree.Element, path: str, namespace: str | None) -> str | None:
+def _text_from(
+    node: ElementTree.Element, path: str, namespace: str | None
+) -> str | None:
     """Read text from a path relative to a node."""
     child = _find_from(node, path, namespace)
     if child is None or child.text is None:

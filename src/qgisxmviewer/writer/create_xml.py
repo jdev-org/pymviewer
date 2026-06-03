@@ -44,8 +44,16 @@ def create_mviewer_xml_skeleton(
         An XML tree containing the common mviewer configuration sections.
     """
     root = Element("config")
-    SubElement(root, "application", _merge_attributes(DEFAULT_APPLICATION_ATTRIBUTES, application_attributes))
-    SubElement(root, "mapoptions", _merge_attributes(DEFAULT_MAPOPTIONS_ATTRIBUTES, mapoptions_attributes))
+    SubElement(
+        root,
+        "application",
+        _merge_attributes(DEFAULT_APPLICATION_ATTRIBUTES, application_attributes),
+    )
+    SubElement(
+        root,
+        "mapoptions",
+        _merge_attributes(DEFAULT_MAPOPTIONS_ATTRIBUTES, mapoptions_attributes),
+    )
 
     baselayers = SubElement(root, "baselayers", {"style": "gallery"})
     if include_default_baselayer:
@@ -60,9 +68,13 @@ def create_empty_xml() -> ElementTree:
     return create_mviewer_xml_skeleton()
 
 
-def _merge_attributes(defaults: dict[str, str], overrides: dict[str, str] | None) -> dict[str, str]:
+def _merge_attributes(
+    defaults: dict[str, str], overrides: dict[str, str] | None
+) -> dict[str, str]:
     """Merge XML attributes while ignoring ``None`` override values."""
     attributes = defaults.copy()
     if overrides:
-        attributes.update({key: value for key, value in overrides.items() if value is not None})
+        attributes.update(
+            {key: value for key, value in overrides.items() if value is not None}
+        )
     return attributes

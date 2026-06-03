@@ -50,7 +50,10 @@ def convert_qgis_layers_to_mviewer_xml(
             elements.append(qgis_geojson_layer_to_mviewer_xml(layer))
         elif layer.layer_type == "wfs" or layer.wfs_published:
             elements.append(qgis_wfs_layer_to_mviewer_xml(layer, service_base_url))
-        elif layer.layer_type in {"wms", "vector", "raster", "unknown"} and layer.wms_published:
+        elif (
+            layer.layer_type in {"wms", "vector", "raster", "unknown"}
+            and layer.wms_published
+        ):
             elements.append(qgis_wms_layer_to_mviewer_xml(layer, service_base_url))
         else:
             LOGGER.warning("Skipping unsupported or unpublished layer: %s", layer.name)

@@ -88,7 +88,13 @@ def add_query_params(url: str, params: dict[str, str]) -> str:
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query.update(params)
     return urlunsplit(
-        (parts.scheme, parts.netloc, parts.path, urlencode(query, quote_via=quote), parts.fragment)
+        (
+            parts.scheme,
+            parts.netloc,
+            parts.path,
+            urlencode(query, quote_via=quote),
+            parts.fragment,
+        )
     )
 
 
@@ -111,7 +117,13 @@ def normalize_wms_legend_url(legend_url: str | None) -> str | None:
             value = "default"
         query.append((key, value))
     return urlunsplit(
-        (parts.scheme, parts.netloc, parts.path, urlencode(query, quote_via=quote), parts.fragment)
+        (
+            parts.scheme,
+            parts.netloc,
+            parts.path,
+            urlencode(query, quote_via=quote),
+            parts.fragment,
+        )
     )
 
 
@@ -139,7 +151,9 @@ def rebase_url(url: str | None, base_url: str) -> str | None:
         return None
     original = urlsplit(url)
     base = urlsplit(clean_service_url(base_url))
-    return urlunsplit((base.scheme, base.netloc, base.path, original.query, original.fragment))
+    return urlunsplit(
+        (base.scheme, base.netloc, base.path, original.query, original.fragment)
+    )
 
 
 def parse_qgis_datasource(source: str | None) -> dict[str, str]:

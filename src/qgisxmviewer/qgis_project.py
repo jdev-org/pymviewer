@@ -6,7 +6,11 @@ import logging
 
 from qgisxmviewer.exceptions import QgisProjectError
 from qgisxmviewer.models import QgisExtent, QgisLayer
-from qgisxmviewer.utils import normalize_xml_id, parse_qgis_datasource, validate_project_path
+from qgisxmviewer.utils import (
+    normalize_xml_id,
+    parse_qgis_datasource,
+    validate_project_path,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,12 +44,19 @@ def read_qgis_server_project(project_path: Path) -> list[QgisLayer]:
     tree_metadata = _read_layer_tree(root)
     layers_by_id = {
         layer.id: layer
-        for layer in (_read_maplayer(node, tree_metadata.get(_layer_id(node), {})) for node in maplayers)
+        for layer in (
+            _read_maplayer(node, tree_metadata.get(_layer_id(node), {}))
+            for node in maplayers
+        )
         if layer is not None
     }
     ordered_ids = [layer_id for layer_id in tree_metadata if layer_id in layers_by_id]
     ordered_layers = [layers_by_id[layer_id] for layer_id in ordered_ids]
-    ordered_layers.extend(layer for layer_id, layer in layers_by_id.items() if layer_id not in tree_metadata)
+    ordered_layers.extend(
+        layer
+        for layer_id, layer in layers_by_id.items()
+        if layer_id not in tree_metadata
+    )
 
     if not ordered_layers:
         raise QgisProjectError(f"QGIS project contains no publishable layers: {path}")
@@ -54,7 +65,9 @@ def read_qgis_server_project(project_path: Path) -> list[QgisLayer]:
     return ordered_layers
 
 
-def _read_maplayer(node: ElementTree.Element, tree_info: dict[str, object]) -> QgisLayer | None:
+def _read_maplayer(
+    node: ElementTree.Element, tree_info: dict[str, object]
+) -> QgisLayer | None:
     """Create a QgisLayer from a QGIS ``maplayer`` node."""
     layer_id = _layer_id(node)
     name = (
@@ -80,7 +93,9 @@ def _read_maplayer(node: ElementTree.Element, tree_info: dict[str, object]) -> Q
         provider=provider,
         source=source,
         layer_type=layer_type,
-        group=tree_info.get("group") if isinstance(tree_info.get("group"), str) else None,
+        group=(
+            tree_info.get("group") if isinstance(tree_info.get("group"), str) else None
+        ),
         visible=bool(tree_info.get("visible", True)),
         crs=_read_crs(node),
         abstract=_text(node, "abstract"),
@@ -112,7 +127,8 @@ def _read_layer_tree(root: ElementTree.Element) -> dict[str, dict[str, object]]:
                 if layer_id:
                     result[layer_id] = {
                         "group": current_group,
-                        "visible": child.get("checked", "Qt::Checked") != "Qt::Unchecked",
+                        "visible": child.get("checked", "Qt::Checked")
+                        != "Qt::Unchecked",
                         "name": child.get("name"),
                         "provider": child.get("providerKey"),
                         "source": child.get("source"),
@@ -122,7 +138,9 @@ def _read_layer_tree(root: ElementTree.Element) -> dict[str, dict[str, object]]:
     return result
 
 
-def _detect_layer_type(node: ElementTree.Element, provider: str | None, source: str | None) -> str:
+def _detect_layer_type(
+    node: ElementTree.Element, provider: str | None, source: str | None
+) -> str:
     """Infer the internal layer type from QGIS metadata."""
     type_attr = (node.get("type") or "").lower()
     provider_value = (provider or "").lower()
@@ -171,11 +189,13 @@ def _published_name(
         source_params = parse_qgis_datasource(source)
         tree_source_params = parse_qgis_datasource(_tree_value(tree_info, "source"))
         return (
-            source_params.get("layers")
-            or tree_source_params.get("layers")
-            or fallback
+            source_params.get("layers") or tree_source_params.get("layers") or fallback
         )
-    return _text(node, "shortname") or _text(node, "serverProperties/shortName") or fallback
+    return (
+        _text(node, "shortname")
+        or _text(node, "serverProperties/shortName")
+        or fallback
+    )
 
 
 def _tree_value(tree_info: dict[str, object], key: str) -> str | None:
@@ -186,7 +206,11 @@ def _tree_value(tree_info: dict[str, object], key: str) -> str | None:
 
 def _read_crs(node: ElementTree.Element) -> str | None:
     """Read the layer CRS auth id."""
-    for path in ("srs/spatialrefsys/authid", "srs/spatialrefsys/description", "crs/spatialrefsys/authid"):
+    for path in (
+        "srs/spatialrefsys/authid",
+        "srs/spatialrefsys/description",
+        "crs/spatialrefsys/authid",
+    ):
         value = _text(node, path)
         if value:
             return value
