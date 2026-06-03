@@ -48,6 +48,71 @@ create_mviewer_config_from_wms_capabilities(
 )
 ```
 
+## How to use it with an MCP?
+
+`pymviewer` now ships a dedicated tool-friendly API in
+`qgisxmviewer.tools_api`. It is designed for MCP usage: string inputs,
+serializable outputs, optional inline XML, and plain dictionaries for layer
+inspection.
+
+Available entry points:
+
+- `generate_mviewer_from_qgs_tool`
+- `generate_mviewer_from_capabilities_tool`
+- `inspect_qgs_layers_tool`
+- `inspect_wms_capabilities_tool`
+
+Example:
+
+```python
+from qgisxmviewer.tools_api import (
+    generate_mviewer_from_capabilities_tool,
+    generate_mviewer_from_qgs_tool,
+    inspect_qgs_layers_tool,
+    inspect_wms_capabilities_tool,
+)
+
+result = generate_mviewer_from_qgs_tool(
+    project_path="/data/project.qgs",
+    service_url="http://localhost:90/ogc/data",
+)
+
+inspection = inspect_wms_capabilities_tool("/data/GetCapabilities.xml")
+```
+
+When `output_path` is omitted, generation tools return inline XML:
+
+```python
+{
+    "mode": "inline",
+    "project_path": "/data/project.qgs",
+    "service_url": "http://localhost:90/ogc/data",
+    "xml": "<?xml version='1.0' ...",
+}
+```
+
+When `output_path` is provided, they return the generated file path:
+
+```python
+{
+    "mode": "file",
+    "output_path": "/tmp/config.xml",
+}
+```
+
+Recommended MCP exposure:
+
+- one tool for `.qgs` to mviewer XML generation;
+- one tool for WMS GetCapabilities to mviewer XML generation;
+- optional read-only tools for inspecting layers before generating XML.
+
+Practical notes:
+
+- return file paths or XML content as plain strings;
+- let `pymviewer` raise explicit errors instead of swallowing exceptions;
+- keep file-system paths configurable from the MCP layer;
+- avoid coupling the conversion logic to the transport layer.
+
 ## Publish library
 
 The repository publishes the package to PyPI from GitHub Actions when a GitHub
