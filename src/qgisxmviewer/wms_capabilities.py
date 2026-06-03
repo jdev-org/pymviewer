@@ -6,15 +6,12 @@ import logging
 
 from qgisxmviewer.exceptions import QgisProjectError
 from qgisxmviewer.models import QgisExtent, QgisLayer
-from qgisxmviewer.utils import normalize_wms_legend_url, unique_xml_id
+from qgisxmviewer.utils import normalize_wms_legend_url
 
 LOGGER = logging.getLogger(__name__)
 
 WMS_NS = {"wms": "http://www.opengis.net/wms"}
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
-RESERVED_MVIEWER_IDS = {"openstreetmap"}
-
-
 def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str]:
     """Read a WMS GetCapabilities document and return layers plus service URL.
 
@@ -47,10 +44,9 @@ def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str
     if root_layer is None:
         raise QgisProjectError(f"WMS capabilities contains no root layer: {path}")
 
-    used_ids: set[str] = set(RESERVED_MVIEWER_IDS)
     layers = []
     for node in root_layer.findall(".//wms:Layer" if namespace else ".//Layer", WMS_NS if namespace else {}):
-        layer = _read_named_layer(node, service_title, namespace, used_ids)
+        layer = _read_named_layer(node, service_title, namespace)
         if layer is not None:
             layers.append(layer)
     if not layers:
@@ -64,7 +60,6 @@ def _read_named_layer(
     node: ElementTree.Element,
     service_title: str | None,
     namespace: str | None,
-    used_ids: set[str],
 ) -> QgisLayer | None:
     """Convert a WMS Layer node into a QgisLayer when it has a Name."""
     name = _text_from(node, "Name", namespace)
@@ -74,7 +69,7 @@ def _read_named_layer(
     crs = _first_text_from(node, ("CRS", "SRS"), namespace)
     legend_url = normalize_wms_legend_url(_legend_url(node, namespace))
     return QgisLayer(
-        id=unique_xml_id(name, used_ids),
+        id=name,
         name=name,
         title=title,
         provider="wms",

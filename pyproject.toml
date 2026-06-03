@@ -21,7 +21,7 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-pymviewer = "pymviewer.cli:main"
+pymviewer = "qgisxmviewer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

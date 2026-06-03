@@ -57,11 +57,16 @@ def read_qgis_server_project(project_path: Path) -> list[QgisLayer]:
 def _read_maplayer(node: ElementTree.Element, tree_info: dict[str, object]) -> QgisLayer | None:
     """Create a QgisLayer from a QGIS ``maplayer`` node."""
     layer_id = _layer_id(node)
-    name = _text(node, "layername") or _text(node, "shortname") or layer_id
-    provider = _text(node, "provider")
-    source = _text(node, "datasource")
+    name = (
+        _text(node, "layername")
+        or tree_info.get("name")
+        or _text(node, "shortname")
+        or layer_id
+    )
+    provider = _text(node, "provider") or _tree_value(tree_info, "provider")
+    source = _text(node, "datasource") or _tree_value(tree_info, "source")
     layer_type = _detect_layer_type(node, provider, source)
-    published_name = _published_name(node, name)
+    published_name = _published_name(node, tree_info, name, layer_type, source)
     metadata = _custom_properties(node)
 
     if not layer_id or not name:
@@ -69,7 +74,7 @@ def _read_maplayer(node: ElementTree.Element, tree_info: dict[str, object]) -> Q
         return None
 
     return QgisLayer(
-        id=normalize_xml_id(published_name or name or layer_id),
+        id=_xml_layer_id(layer_type, published_name or name or layer_id),
         name=name,
         title=_text(node, "title") or name,
         provider=provider,
@@ -108,6 +113,9 @@ def _read_layer_tree(root: ElementTree.Element) -> dict[str, dict[str, object]]:
                     result[layer_id] = {
                         "group": current_group,
                         "visible": child.get("checked", "Qt::Checked") != "Qt::Unchecked",
+                        "name": child.get("name"),
+                        "provider": child.get("providerKey"),
+                        "source": child.get("source"),
                     }
 
     visit(layer_tree, None)
@@ -144,9 +152,36 @@ def _is_xyz_layer(provider: str | None, source: str | None) -> bool:
     return datasource.get("type", "").lower() == "xyz"
 
 
-def _published_name(node: ElementTree.Element, fallback: str) -> str:
+def _xml_layer_id(layer_type: str, published_name: str) -> str:
+    """Return the mviewer XML id to emit for a layer."""
+    if layer_type == "wms":
+        return published_name
+    return normalize_xml_id(published_name)
+
+
+def _published_name(
+    node: ElementTree.Element,
+    tree_info: dict[str, object],
+    fallback: str,
+    layer_type: str,
+    source: str | None,
+) -> str:
     """Return the name exposed by QGIS Server when available."""
+    if layer_type == "wms":
+        source_params = parse_qgis_datasource(source)
+        tree_source_params = parse_qgis_datasource(_tree_value(tree_info, "source"))
+        return (
+            source_params.get("layers")
+            or tree_source_params.get("layers")
+            or fallback
+        )
     return _text(node, "shortname") or _text(node, "serverProperties/shortName") or fallback
+
+
+def _tree_value(tree_info: dict[str, object], key: str) -> str | None:
+    """Return a string value from layer-tree metadata when available."""
+    value = tree_info.get(key)
+    return value if isinstance(value, str) and value else None
 
 
 def _read_crs(node: ElementTree.Element) -> str | None:

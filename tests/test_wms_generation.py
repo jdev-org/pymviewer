@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from qgisxmviewer.models import QgisLayer
+from qgisxmviewer.qgis_project import read_qgis_server_project
 from qgisxmviewer.services.qgis_to_mviewer import convert_qgis_layers_to_mviewer_xml
 from qgisxmviewer.wms_capabilities import read_wms_capabilities
 from qgisxmviewer.utils import (
@@ -66,12 +67,12 @@ class WmsGenerationTest(unittest.TestCase):
             xml_layers = convert_qgis_layers_to_mviewer_xml(layers, service_url)
 
         first, second = xml_layers
-        self.assertEqual(first.get("id"), "contributeurs_qgis")
+        self.assertEqual(first.get("id"), "Contributeurs QGIS")
         self.assertEqual(first.get("name"), "Contributeurs QGIS")
         self.assertEqual(first.get("layers"), "Contributeurs%20QGIS")
         self.assertIn("LAYER=Contributeurs%20QGIS", first.get("legendurl") or "")
         self.assertIn("STYLE=default", first.get("legendurl") or "")
-        self.assertEqual(second.get("id"), "contributeurs_qgis_2")
+        self.assertEqual(second.get("id"), "Contributeurs-QGIS")
 
     def test_capabilities_generation_encodes_apostrophe_in_layers(self) -> None:
         """Generated XML should encode apostrophes in WMS layer names."""
@@ -87,7 +88,7 @@ class WmsGenerationTest(unittest.TestCase):
     def test_qgis_project_conversion_uses_published_name_for_layers(self) -> None:
         """The WMS LAYER parameter should use the published name, not the XML id."""
         layer = QgisLayer(
-            id="cours_d_eau",
+            id="Cours d'eau",
             name="Cours d'eau",
             title="Cours d'eau",
             provider="wms",
@@ -101,8 +102,36 @@ class WmsGenerationTest(unittest.TestCase):
 
         [xml_layer] = convert_qgis_layers_to_mviewer_xml([layer], "http://localhost:90/ogc/pomme")
 
-        self.assertEqual(xml_layer.get("id"), "cours_d_eau")
+        self.assertEqual(xml_layer.get("id"), "Cours d'eau")
         self.assertEqual(xml_layer.get("layers"), "Cours%20d%27eau")
+
+    def test_qgis_project_wms_uses_datasource_layers_for_service_layer_name(self) -> None:
+        """WMS project export should use the datasource ``layers`` parameter."""
+        with TemporaryDirectory() as directory:
+            project_path = Path(directory) / "project.qgs"
+            project_path.write_text(_qgis_project_xml_with_wms_datasource_layer(), encoding="utf-8")
+
+            layers = read_qgis_server_project(project_path)
+            [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, "http://localhost:90/ogc/pomme")
+
+        self.assertEqual(layers[0].published_name, "environnement_hydrologie")
+        self.assertEqual(xml_layer.get("id"), "environnement_hydrologie")
+        self.assertEqual(xml_layer.get("name"), "Cours d'eau")
+        self.assertEqual(xml_layer.get("layers"), "environnement_hydrologie")
+
+    def test_qgis_project_wms_uses_layer_tree_source_as_fallback(self) -> None:
+        """WMS project export should fall back to ``layer-tree-layer@source``."""
+        with TemporaryDirectory() as directory:
+            project_path = Path(directory) / "project.qgs"
+            project_path.write_text(_qgis_project_xml_with_layer_tree_source_only(), encoding="utf-8")
+
+            layers = read_qgis_server_project(project_path)
+            [xml_layer] = convert_qgis_layers_to_mviewer_xml(layers, "http://localhost:90/ogc/pomme")
+
+        self.assertEqual(layers[0].published_name, "environnement_hydrologie")
+        self.assertEqual(xml_layer.get("id"), "environnement_hydrologie")
+        self.assertEqual(xml_layer.get("name"), "Cours d'eau")
+        self.assertEqual(xml_layer.get("layers"), "environnement_hydrologie")
 
     def test_service_override_rebases_legend_url(self) -> None:
         """Legend URLs should use the same base URL as generated WMS layers."""
@@ -204,6 +233,67 @@ def _capabilities_xml_with_apostrophe() -> str:
     </Layer>
   </Capability>
 </WMS_Capabilities>
+"""
+
+
+def _qgis_project_xml_with_wms_datasource_layer() -> str:
+    """Return a minimal QGIS project with a WMS datasource ``layers`` value."""
+    return """<?xml version="1.0" encoding="UTF-8"?>
+<qgis>
+  <layer-tree-group>
+    <layer-tree-layer
+        id="layer-1"
+        name="Cours d'eau"
+        checked="Qt::Checked"
+        providerKey="wms"
+        source="crs=EPSG:3857&amp;dpiMode=7&amp;featureCount=10&amp;format=image/png&amp;layers=environnement_hydrologie&amp;styles&amp;url=http://localhost:90/ogc/pomme"/>
+  </layer-tree-group>
+  <projectlayers>
+    <maplayer type="vector">
+      <id>layer-1</id>
+      <layername>Cours d'eau</layername>
+      <shortname>cours_d_eau</shortname>
+      <provider>wms</provider>
+      <datasource>contextualWMSLegend=0&amp;crs=EPSG:3857&amp;dpiMode=7&amp;featureCount=10&amp;format=image/png&amp;layers=environnement_hydrologie&amp;styles&amp;url=http://localhost:90/ogc/pomme</datasource>
+      <title>Cours d'eau</title>
+      <srs>
+        <spatialrefsys>
+          <authid>EPSG:3857</authid>
+        </spatialrefsys>
+      </srs>
+    </maplayer>
+  </projectlayers>
+</qgis>
+"""
+
+
+def _qgis_project_xml_with_layer_tree_source_only() -> str:
+    """Return a minimal QGIS project using ``layer-tree-layer@source`` as fallback."""
+    return """<?xml version="1.0" encoding="UTF-8"?>
+<qgis>
+  <layer-tree-group>
+    <layer-tree-layer
+        id="layer-1"
+        name="Cours d'eau"
+        checked="Qt::Checked"
+        providerKey="wms"
+        source="crs=EPSG:3857&amp;dpiMode=7&amp;featureCount=10&amp;format=image/png&amp;layers=environnement_hydrologie&amp;styles&amp;url=http://localhost:90/ogc/pomme"/>
+  </layer-tree-group>
+  <projectlayers>
+    <maplayer type="vector">
+      <id>layer-1</id>
+      <layername>Cours d'eau</layername>
+      <provider>wms</provider>
+      <datasource></datasource>
+      <title>Cours d'eau</title>
+      <srs>
+        <spatialrefsys>
+          <authid>EPSG:3857</authid>
+        </spatialrefsys>
+      </srs>
+    </maplayer>
+  </projectlayers>
+</qgis>
 """
 
 
