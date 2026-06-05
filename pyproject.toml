@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymviewer"
-version = "0.1.0"
+version = "1.0.1"
 description = "Generate mviewer XML configurations from QGIS Server projects and WMS capabilities."
 readme = "README.md"
 requires-python = ">=3.10"
