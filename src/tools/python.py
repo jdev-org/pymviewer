@@ -200,7 +200,9 @@ def _serialize_xml_element(element: Element) -> dict[str, Any]:
     }
 
 
-def _serialize_wms_layer_structure(layer: QgisLayer, service_url: str) -> dict[str, Any]:
+def _serialize_wms_layer_structure(
+    layer: QgisLayer, service_url: str
+) -> dict[str, Any]:
     """Serialize a WMS ``QgisLayer`` into a tool-friendly structure."""
     element = qgis_wms_layer_to_mviewer_xml(
         layer,
@@ -209,7 +211,9 @@ def _serialize_wms_layer_structure(layer: QgisLayer, service_url: str) -> dict[s
     return _serialize_xml_element(element)
 
 
-def _serialize_wfs_layer_structure(layer: QgisLayer, service_url: str) -> dict[str, Any]:
+def _serialize_wfs_layer_structure(
+    layer: QgisLayer, service_url: str
+) -> dict[str, Any]:
     """Serialize a WFS ``QgisLayer`` into a tool-friendly structure."""
     element = qgis_wfs_layer_to_mviewer_xml(
         layer,

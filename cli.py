@@ -19,10 +19,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--log-level", default="INFO", help="Python logging level")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    from_qgs = subparsers.add_parser("from-qgs", help="Generate XML from a QGIS .qgs file")
-    from_qgs.add_argument("--project", required=True, type=Path, help="Path to the QGIS .qgs file")
+    from_qgs = subparsers.add_parser(
+        "from-qgs", help="Generate XML from a QGIS .qgs file"
+    )
+    from_qgs.add_argument(
+        "--project", required=True, type=Path, help="Path to the QGIS .qgs file"
+    )
     from_qgs.add_argument("--output", required=True, type=Path, help="Output XML path")
-    from_qgs.add_argument("--service-url", required=True, help="QGIS Server WMS base URL")
+    from_qgs.add_argument(
+        "--service-url", required=True, help="QGIS Server WMS base URL"
+    )
 
     from_capabilities = subparsers.add_parser(
         "from-capabilities",
@@ -34,8 +40,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Path to the WMS GetCapabilities XML file",
     )
-    from_capabilities.add_argument("--output", required=True, type=Path, help="Output XML path")
-    from_capabilities.add_argument("--service-url", help="Override WMS service base URL")
+    from_capabilities.add_argument(
+        "--output", required=True, type=Path, help="Output XML path"
+    )
+    from_capabilities.add_argument(
+        "--service-url", help="Override WMS service base URL"
+    )
     return parser
 
 

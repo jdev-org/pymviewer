@@ -5,9 +5,13 @@ import argparse
 import logging
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "lib" / "qgisxmviewer" / "src"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent / "lib" / "qgisxmviewer" / "src")
+)
 
-from qgisxmviewer.services.qgis_to_mviewer import create_mviewer_config_from_qgis_project
+from qgisxmviewer.services.qgis_to_mviewer import (
+    create_mviewer_config_from_qgis_project,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -15,8 +19,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate a mviewer XML configuration from a QGIS Server project."
     )
-    parser.add_argument("--project", required=True, type=Path, help="Path to the QGIS .qgs project")
-    parser.add_argument("--output", required=True, type=Path, help="Output mviewer XML path")
+    parser.add_argument(
+        "--project", required=True, type=Path, help="Path to the QGIS .qgs project"
+    )
+    parser.add_argument(
+        "--output", required=True, type=Path, help="Output mviewer XML path"
+    )
     parser.add_argument("--service-url", required=True, help="QGIS Server base URL")
     parser.add_argument("--log-level", default="INFO", help="Python logging level")
     return parser
@@ -27,7 +35,9 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO))
-    output = create_mviewer_config_from_qgis_project(args.project, args.output, args.service_url)
+    output = create_mviewer_config_from_qgis_project(
+        args.project, args.output, args.service_url
+    )
     print(output)
     return 0
 
