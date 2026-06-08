@@ -20,6 +20,23 @@ from qgisxmviewer.wms_capabilities import read_wms_capabilities
 LOGGER = logging.getLogger(__name__)
 
 
+def _normalized_title(value: str | None) -> str:
+    """Return a normalized non-empty title string."""
+    return " ".join((value or "").split()).strip()
+
+
+def _preferred_config_title_from_layers(
+    layers: list[QgisLayer], fallback: str = "Projet QGIS"
+) -> str:
+    """Return the preferred configuration title extracted from QGIS layers."""
+    for layer in layers:
+        for candidate in (layer.group, layer.title, layer.name):
+            normalized_candidate = _normalized_title(candidate)
+            if normalized_candidate:
+                return normalized_candidate
+    return fallback
+
+
 def create_mviewer_config_from_qgis_project(
     project_path: Path,
     output_path: Path,
@@ -56,7 +73,12 @@ def build_mviewer_tree_from_qgis_project(
     """
     layers = read_qgis_server_project(project_path)
     xml_layers = convert_qgis_layers_to_mviewer_xml(layers, service_base_url)
-    return build_mviewer_xml(xml_layers)
+    config_title = _preferred_config_title_from_layers(layers)
+    return build_mviewer_xml(
+        xml_layers,
+        application_attributes={"title": config_title},
+        default_theme_name=config_title,
+    )
 
 
 def convert_qgis_layers_to_mviewer_xml(
@@ -125,7 +147,12 @@ def build_mviewer_tree_from_wms_capabilities(
         layers,
         service_base_url or detected_service_url,
     )
-    return build_mviewer_xml(xml_layers)
+    config_title = _preferred_config_title_from_layers(layers)
+    return build_mviewer_xml(
+        xml_layers,
+        application_attributes={"title": config_title},
+        default_theme_name=config_title,
+    )
 
 
 def create_mviewer_xml_text_from_qgis_project(

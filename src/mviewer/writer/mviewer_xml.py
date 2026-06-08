@@ -12,13 +12,21 @@ from mviewer.writer.create_xml import create_mviewer_xml_skeleton
 LOGGER = logging.getLogger(__name__)
 
 
-def build_mviewer_xml(layer_elements: list[Element]) -> ElementTree:
+def build_mviewer_xml(
+    layer_elements: list[Element],
+    application_attributes: dict[str, str] | None = None,
+    default_theme_name: str = "Projet QGIS",
+) -> ElementTree:
     """Build a mviewer XML document from layer XML elements."""
     if not layer_elements:
         raise MviewerXmlError("Cannot build a mviewer configuration without layers")
 
-    tree = create_mviewer_xml_skeleton()
-    return complete_mviewer_xml(tree, layer_elements)
+    tree = create_mviewer_xml_skeleton(application_attributes=application_attributes)
+    return complete_mviewer_xml(
+        tree,
+        layer_elements,
+        default_theme_name=default_theme_name,
+    )
 
 
 def write_mviewer_xml(tree: ElementTree, output_path: Path) -> Path:
