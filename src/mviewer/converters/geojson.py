@@ -23,5 +23,6 @@ def qgis_geojson_layer_to_mviewer_xml(layer: QgisLayer) -> Element:
             "searchable": "false",
             "tiled": "false",
             "group": layer.group or "",
+            "theme": layer.theme or "",
         },
     )

@@ -30,7 +30,7 @@ def _preferred_config_title_from_layers(
 ) -> str:
     """Return the preferred configuration title extracted from QGIS layers."""
     for layer in layers:
-        for candidate in (layer.group, layer.title, layer.name):
+        for candidate in (layer.theme, layer.group, layer.title, layer.name):
             normalized_candidate = _normalized_title(candidate)
             if normalized_candidate:
                 return normalized_candidate

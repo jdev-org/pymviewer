@@ -12,7 +12,10 @@ from mviewer.utils import (
 )
 from qgisxmviewer.models import QgisLayer
 from qgisxmviewer.qgis_project import read_qgis_server_project
-from qgisxmviewer.services.qgis_to_mviewer import convert_qgis_layers_to_mviewer_xml
+from qgisxmviewer.services.qgis_to_mviewer import (
+    build_mviewer_tree_from_wms_capabilities,
+    convert_qgis_layers_to_mviewer_xml,
+)
 from qgisxmviewer.wms_capabilities import read_wms_capabilities
 
 
@@ -86,6 +89,31 @@ class WmsGenerationTest(unittest.TestCase):
 
         self.assertEqual(xml_layer.get("name"), "Cours d'eau")
         self.assertEqual(xml_layer.get("layers"), "Cours%20d%27eau")
+
+    def test_grouped_wms_capabilities_create_theme_groups(self) -> None:
+        """Grouped capabilities should create one theme with nested mviewer groups."""
+        with TemporaryDirectory() as directory:
+            capabilities_path = Path(directory) / "capabilities.xml"
+            capabilities_path.write_text(_grouped_capabilities_xml(), encoding="utf-8")
+
+            tree = build_mviewer_tree_from_wms_capabilities(capabilities_path)
+
+        root = tree.getroot()
+        themes = root.find("themes")
+        self.assertIsNotNone(themes)
+        [theme] = list(themes.findall("theme"))
+        self.assertEqual(theme.get("name"), "grouped")
+
+        groups = theme.findall("group")
+        self.assertEqual([group.get("name") for group in groups], ["vecteurs", "WMS"])
+        self.assertEqual(
+            [layer.get("id") for layer in groups[0].findall("layer")],
+            ["contributors", "zone_test"],
+        )
+        self.assertEqual(
+            [layer.get("id") for layer in groups[1].findall("layer")],
+            ["coursdeau", "contoursdesterritoiresdevieinseetvs"],
+        )
 
     def test_qgis_project_conversion_uses_published_name_for_layers(self) -> None:
         """The WMS LAYER parameter should use the published name, not the XML id."""
@@ -310,6 +338,49 @@ def _qgis_project_xml_with_layer_tree_source_only() -> str:
     </maplayer>
   </projectlayers>
 </qgis>
+"""
+
+
+def _grouped_capabilities_xml() -> str:
+    """Return grouped WMS capabilities with first-level layer groups."""
+    return """<?xml version="1.0" encoding="utf-8"?>
+<WMS_Capabilities version="1.3.0"
+    xmlns="http://www.opengis.net/wms"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+  <Service>
+    <Title>grouped</Title>
+    <OnlineResource xlink:href="http://localhost/ogc/fraise"/>
+  </Service>
+  <Capability>
+    <Layer>
+      <Title>grouped</Title>
+      <Layer queryable="1">
+        <Name>vecteurs</Name>
+        <Title>vecteurs</Title>
+        <Layer queryable="1">
+          <Name>contributors</Name>
+          <Title>contributors</Title>
+        </Layer>
+        <Layer queryable="1">
+          <Name>zone_test</Name>
+          <Title>zone_test</Title>
+        </Layer>
+      </Layer>
+      <Layer queryable="1">
+        <Name>WMS</Name>
+        <Title>WMS</Title>
+        <Layer queryable="1">
+          <Name>coursdeau</Name>
+          <Title>Cours d'eau</Title>
+        </Layer>
+        <Layer queryable="1">
+          <Name>contoursdesterritoiresdevieinseetvs</Name>
+          <Title>Contours des territoires de vie INSEE (TVS)</Title>
+        </Layer>
+      </Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>
 """
 
 

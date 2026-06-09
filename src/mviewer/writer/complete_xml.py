@@ -28,10 +28,15 @@ def complete_mviewer_xml(
         themes = SubElement(root, "themes", {"mini": "false"})
 
     theme_by_id = _index_existing_themes(themes)
+    group_by_theme_id: dict[str, dict[str, Element]] = {
+        theme_id: _index_existing_groups(theme)
+        for theme_id, theme in theme_by_id.items()
+    }
     for layer in layer_elements:
         output_layer = deepcopy(layer)
-        group_name = output_layer.attrib.pop("group", None) or default_theme_name
-        theme_id = normalize_xml_id(group_name)
+        theme_name = output_layer.attrib.pop("theme", None) or default_theme_name
+        group_name = output_layer.attrib.pop("group", None)
+        theme_id = normalize_xml_id(theme_name)
         theme = theme_by_id.get(theme_id)
         if theme is None:
             theme = SubElement(
@@ -39,14 +44,32 @@ def complete_mviewer_xml(
                 "theme",
                 {
                     "id": theme_id,
-                    "name": group_name,
+                    "name": theme_name,
                     "collapsed": "false",
                     "icon": "fas fa-map",
                 },
             )
             theme_by_id[theme_id] = theme
+            group_by_theme_id[theme_id] = {}
             LOGGER.debug("Created mviewer theme %s", theme_id)
-        theme.append(output_layer)
+        if group_name:
+            groups = group_by_theme_id[theme_id]
+            group_id = normalize_xml_id(group_name)
+            group = groups.get(group_id)
+            if group is None:
+                group = SubElement(
+                    theme,
+                    "group",
+                    {
+                        "id": group_id,
+                        "name": group_name,
+                    },
+                )
+                groups[group_id] = group
+                LOGGER.debug("Created mviewer group %s in theme %s", group_id, theme_id)
+            group.append(output_layer)
+        else:
+            theme.append(output_layer)
 
     return tree
 
@@ -62,4 +85,13 @@ def _index_existing_themes(themes: Element) -> dict[str, Element]:
     for theme in themes.findall("theme"):
         theme_id = theme.get("id") or normalize_xml_id(theme.get("name") or "qgis")
         indexed[theme_id] = theme
+    return indexed
+
+
+def _index_existing_groups(theme: Element) -> dict[str, Element]:
+    """Return existing mviewer groups keyed by normalized group id."""
+    indexed: dict[str, Element] = {}
+    for group in theme.findall("group"):
+        group_id = group.get("id") or normalize_xml_id(group.get("name") or "groupe")
+        indexed[group_id] = group
     return indexed

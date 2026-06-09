@@ -48,13 +48,8 @@ def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str
     if root_layer is None:
         raise QgisProjectError(f"WMS capabilities contains no root layer: {path}")
 
-    layers = []
-    for node in root_layer.findall(
-        ".//wms:Layer" if namespace else ".//Layer", WMS_NS if namespace else {}
-    ):
-        layer = _read_named_layer(node, service_title, namespace)
-        if layer is not None:
-            layers.append(layer)
+    theme_title = _text_from(root_layer, "Title", namespace) or service_title or "WMS"
+    layers = _read_layers_from_children(root_layer, theme_title, namespace)
     if not layers:
         raise QgisProjectError(f"WMS capabilities contains no named layers: {path}")
 
@@ -64,7 +59,8 @@ def read_wms_capabilities(capabilities_path: Path) -> tuple[list[QgisLayer], str
 
 def _read_named_layer(
     node: ElementTree.Element,
-    service_title: str | None,
+    theme_title: str | None,
+    group_title: str | None,
     namespace: str | None,
 ) -> QgisLayer | None:
     """Convert a WMS Layer node into a QgisLayer when it has a Name."""
@@ -81,7 +77,7 @@ def _read_named_layer(
         provider="wms",
         source=None,
         layer_type="wms",
-        group=service_title or "WMS",
+        group=group_title,
         visible=False,
         crs=crs,
         extent=_extent(node, namespace),
@@ -89,7 +85,52 @@ def _read_named_layer(
         queryable=node.get("queryable") in {"1", "true", "True"},
         wms_published=True,
         legend_url=legend_url,
+        theme=theme_title or "WMS",
     )
+
+
+def _read_layers_from_children(
+    parent: ElementTree.Element,
+    theme_title: str,
+    namespace: str | None,
+) -> list[QgisLayer]:
+    """Return named layers while preserving the first level of WMS groups."""
+    child_path = "wms:Layer" if namespace else "Layer"
+    children = parent.findall(child_path, WMS_NS if namespace else {})
+    if not children:
+        return []
+
+    layers: list[QgisLayer] = []
+    for child in children:
+        child_layers = child.findall(child_path, WMS_NS if namespace else {})
+        child_title = _text_from(child, "Title", namespace)
+        if child_layers:
+            group_title = child_title or _text_from(child, "Name", namespace)
+            layers.extend(
+                _read_layers_in_group(child, theme_title, group_title, namespace)
+            )
+            continue
+
+        layer = _read_named_layer(child, theme_title, None, namespace)
+        if layer is not None:
+            layers.append(layer)
+    return layers
+
+
+def _read_layers_in_group(
+    group_node: ElementTree.Element,
+    theme_title: str,
+    group_title: str | None,
+    namespace: str | None,
+) -> list[QgisLayer]:
+    """Flatten a WMS group node into named leaf layers assigned to that group."""
+    child_path = "wms:Layer" if namespace else "Layer"
+    layers: list[QgisLayer] = []
+    for child in group_node.findall(child_path, WMS_NS if namespace else {}):
+        layer = _read_named_layer(child, theme_title, group_title, namespace)
+        if layer is not None:
+            layers.append(layer)
+    return layers
 
 
 def _service_url(root: ElementTree.Element, namespace: str | None) -> str:

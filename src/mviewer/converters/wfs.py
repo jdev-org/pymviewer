@@ -32,5 +32,6 @@ def qgis_wfs_layer_to_mviewer_xml(layer: QgisLayer, service_base_url: str) -> El
             "searchable": "false",
             "tiled": "false",
             "group": layer.group or "",
+            "theme": layer.theme or "",
         },
     )

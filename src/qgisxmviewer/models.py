@@ -36,3 +36,4 @@ class QgisLayer:
     xyz: bool = False
     legend_url: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
+    theme: str | None = None
